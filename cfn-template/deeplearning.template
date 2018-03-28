@@ -1,98 +1,49 @@
 {
   "AWSTemplateFormatVersion" : "2010-09-09",
-  "Description" : "Launches a Deep Learning Cluster with one Master and variable number of Workers.",
+  "Description" : "Custom fork of deeplearning-cfn. Launches a Deep Learning Cluster with one Master and variable number of Workers.",
   "Parameters" : {
     "KeyName" : {
-      "Description" : "Name of an existing Amazon EC2 KeyPair to enable SSH access to the instances",
+      "Description" : "Name of an existing Amazon EC2 key pair to enable SSH access to the instances",
       "Type" : "AWS::EC2::KeyPair::KeyName"
     },
     "WorkerCount" : {
-      "Description" : "The number of worker instances (launches +1 instance for the Master).",
+      "Description" : "The number of Worker instances (launches +1 instance for the Master).",
       "Type" : "Number",
       "MinValue" : "1",
       "Default" : "1"
     },
     "InstanceType" : {
-      "Description" : "The EC2 instance type for workers.For GPUs choose g2.xx or p2.xx",
+      "Description" : "The EC2 instance type for Workers.",
       "Type" : "String",
-      "Default" : "p3.2xlarge",
+      "Default" : "p2.xlarge",
       "AllowedValues" : [
         "p2.16xlarge",
         "p2.8xlarge",
         "p2.xlarge",
         "p3.2xlarge",
         "p3.8xlarge",
-        "p3.16xlarge",
-        "g2.8xlarge",
-        "g2.2xlarge",
-        "t2.small",
-        "t2.medium",
-        "t2.large",
-        "t2.xlarge",
-        "t2.2xlarge",
-        "m4.large",
-        "m4.xlarge",
-        "m4.2xlarge",
-        "m4.4xlarge",
-        "m4.10xlarge",
-        "m4.16xlarge",
-        "m3.medium",
-        "m3.large",
-        "m3.xlarge",
-        "m3.2xlarge",
-        "c4.large",
-        "c4.xlarge",
-        "c4.2xlarge",
-        "c4.4xlarge",
-        "c4.8xlarge",
-        "c3.large",
-        "c3.xlarge",
-        "c3.2xlarge",
-        "c3.4xlarge",
-        "c3.8xlarge",
-        "x1.16large",
-        "x1.32xlarge",
-        "r4.large",
-        "r4.xlarge",
-        "r4.2xlarge",
-        "r4.4xlarge",
-        "r4.8xlarge",
-        "r4.16xlarge",
-        "r3.large",
-        "r3.xlarge",
-        "r3.2xlarge",
-        "r3.4xlarge",
-        "r3.8xlarge",
-        "i2.xlarge",
-        "i2.2xlarge",
-        "i2.4xlarge",
-        "i2.8xlarge",
-        "d2.xlarge",
-        "d2.2xlarge",
-        "d2.4xlarge",
-        "d2.8xlarge",
-        "f1.2xlarge",
-        "f1.16xlarge"
+        "p3.16xlarge"
       ],
-      "ConstraintDescription" : "Must be a valid CPU optimized or GPU EC2 instance type."
+      "ConstraintDescription" : "Must be a valid GPU EC2 instance type."
     },
     "ImageType" : {
-       "Description" : "Linux Flavor(Amazon Linux or Ubuntu)",
+       "Description" : "Linux OS (Amazon Linux or Ubuntu)",
        "Type" : "String",
-       "Default" : "AmazonLinux",
+       "Default" : "Ubuntu",
        "AllowedValues" : [ "AmazonLinux", "Ubuntu" ],
        "ConstraintDescription" : "Amazon Supported Image Type"
      },
     "SSHLocation": {
       "Description": "Restrict SSH access to a valid CIDR range, this should be a valid CIDR IP address range that you want to allow access to your Master and Stack.",
       "Type": "String",
+      "Default": "0.0.0.0/0",
       "MinLength": "9",
       "MaxLength": "18",
       "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
       "ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x"
     },
     "EFSFileSystemId" :{
-      "Description": "Existing Amazon EFS File System Id or leave it blank to create a new EFS File System.",
+      "Description": "Existing Amazon EFS File System Id. Leave blank to create a new EFS File System.",
       "Type": "String",
       "AllowedPattern": "(^fs-[0-9a-f]{8,8})$|()$",
       "Default": "",
@@ -102,7 +53,7 @@
       "Description" : "The Linux mount point for the EFS volume",
       "Type": "String",
       "MinLength": "1",
-      "Default": "myEFSvolume"
+      "Default": "efs"
     }
   },
   "Conditions" : {
@@ -110,28 +61,18 @@
   },
   "Mappings" : {
     "AmazonLinux" : {
-      "us-east-1"      : { "AMI" : "ami-9706e5ea"  },
-      "us-west-2"      : { "AMI" : "ami-dc70ffa4"  },
-      "eu-west-1"      : { "AMI" : "ami-8caad3f5"  },
-      "us-east-2"      : { "AMI" : "ami-f4586f91"  },
-      "ap-southeast-2"      : { "AMI" : "ami-bbd710d9"  },
-      "ap-northeast-1"      : { "AMI" : "ami-5ba3d93d"  },
-      "ap-northeast-2"      : { "AMI" : "ami-d0d67bbe"  },
-      "ap-south-1"      : { "AMI" : "ami-359ec25a"  },
-      "eu-central-1"      : { "AMI" : "ami-ca3351a5"  },
-      "ap-southeast-1"      : { "AMI" : "ami-ded39da2"  }
+      "us-east-1"      : { "AMI" : "ami-6637e51b"  },
+      "us-east-2"      : { "AMI" : "ami-c81829ad"  },
+      "us-west-2"      : { "AMI" : "ami-9c039de4"  },
+      "eu-west-1"      : { "AMI" : "ami-2624755f"  },
+      "ap-southeast-2" : { "AMI" : "ami-cd874baf"  }
     },
     "Ubuntu" : {
-      "us-east-1"      : { "AMI" : "ami-173bd86a"  },
-      "us-west-2"      : { "AMI" : "ami-5a77f822"  },
-      "eu-west-1"      : { "AMI" : "ami-2fb0c956"  },
-      "us-east-2"      : { "AMI" : "ami-295b6c4c"  },
-      "ap-southeast-2" : { "AMI" : "ami-64d51206"  },
-      "ap-northeast-1" : { "AMI" : "ami-bcafd5da"  },
-      "ap-northeast-2" : { "AMI" : "ami-1ad17c74"  },
-      "ap-south-1" : { "AMI" : "ami-959fc3fa"  },
-      "eu-central-1" : { "AMI" : "ami-3a254755"  },
-      "ap-southeast-1" : { "AMI" : "ami-63d9971f"  }
+      "us-east-1"      : { "AMI" : "ami-bc09d9c1"  },
+      "us-east-2"      : { "AMI" : "ami-5b22133e"  },
+      "us-west-2"      : { "AMI" : "ami-d2c759aa"  },
+      "eu-west-1"      : { "AMI" : "ami-70560009"  },
+      "ap-southeast-2" : { "AMI" : "ami-2d45884f"  }
     },
     "SubnetConfig" : {
       "VPC"     : { "CIDR" : "10.0.0.0/16" },
@@ -140,15 +81,10 @@
     },
     "S3" : {
       "us-east-1"      : { "URL" : "https://s3.amazonaws.com/" },
+      "us-east-2"      : { "URL" : "https://s3-us-east-2.amazonaws.com/" },
       "us-west-2"      : { "URL" : "https://s3-us-west-2.amazonaws.com/" },
       "eu-west-1"      : { "URL" : "https://s3-eu-west-1.amazonaws.com/" },
-      "us-east-2"      : { "URL" : "https://s3-us-east-2.amazonaws.com/" },
-      "ap-southeast-2" : { "URL" : "https://s3-ap-southeast-2.amazonaws.com/" },
-      "ap-northeast-1" : { "URL" : "https://s3-ap-northeast-1.amazonaws.com/" },
-      "ap-northeast-2" : { "URL" : "https://s3-ap-northeast-2.amazonaws.com/" },
-      "ap-south-1" : { "URL" : "https://s3-ap-south-1.amazonaws.com/" },
-      "eu-central-1" : { "URL" : "https://s3-eu-central-1.amazonaws.com/" },
-      "ap-southeast-1" : { "URL" : "https://s3-ap-southeast-1.amazonaws.com/" }
+      "ap-southeast-2" : { "URL" : "https://s3-ap-southeast-2.amazonaws.com/" }
     },
     "Other" : {
       "S3SourceBucket" : { "BucketNameSuffix" : "-aws-dl-cfn" },
@@ -168,7 +104,7 @@
         "Role": { "Fn::GetAtt" : ["LambdaExecutionRole", "Arn"] },
         "Code": {
             "S3Bucket":  {"Fn::Join" : ["", [{ "Ref" : "AWS::Region" }, { "Fn::FindInMap" : [ "Other", "S3SourceBucket", "BucketNameSuffix" ]} ] ]},
-            "S3Key": { "Fn::FindInMap" : [ "Other", "LambdaFunction", "FileName" ]}
+            "S3Key": { "Fn::FindInMap" : [ "Other", "LambdaFunction", "FileName" ]},
           },
           "MemorySize" : "256",
           "Timeout": "60",
@@ -438,7 +374,7 @@
       "Condition": "CreateNewFileSystem",
       "DeletionPolicy": "Retain",
       "Properties": {
-        "PerformanceMode": "generalPurpose",
+        "PerformanceMode": "maxIO",
         "FileSystemTags": [
           {
             "Key": "Name",
@@ -576,6 +512,11 @@
                 "# setup ssh-forwarding. \n",
                 "sed -i \"s/^#\\(\\s\\+\\)ForwardAgent\\(\\s\\+\\)no/\\ \\1ForwardAgent\\2yes/g\" /etc/ssh/ssh_config",
                 "\n",
+
+                "echo 'set -o vi' >> /home/ubuntu/.bashrc \n",
+                "source /home/ubuntu/.bashrc \n",
+                "curl -o /home/ubuntu/.vimrc https://raw.githubusercontent.com/jarvisglee/dotfiles/master/.vimrc \n",
+                "curl -o /home/ubuntu/.tmux.conf https://raw.githubusercontent.com/jarvisglee/dotfiles/master/.tmux.conf \n",
 
                 "mkdir -p /opt/deeplearning",
                 "\n",
