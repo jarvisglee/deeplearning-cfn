@@ -240,6 +240,12 @@
         } ]
       }
     },
+    "ClusterGroup" : {
+      "Type" : "AWS::EC2::PlacementGroup",
+      "Properties" : {
+        "Strategy" : "cluster"
+      }
+    },
     "AdminSSHSecurityGroup" : {
       "Type" : "AWS::EC2::SecurityGroup",
       "Properties" : {
@@ -406,6 +412,7 @@
         "SecurityGroups" : [
           {"Ref" : "WorkerSecurityGroup"}
         ],
+        "EbsOptimized" : "true",
         "UserData" : {
           "Fn::Base64" : {
             "Fn::Join" : [ "",
@@ -503,6 +510,7 @@
           { "Ref" : "MasterSecurityGroup" },
           { "Ref" : "AdminSSHSecurityGroup" }
         ],
+        "EbsOptimized" : "true",
         "UserData" : {
           "Fn::Base64" : {
             "Fn::Join" : [ "",
@@ -589,7 +597,7 @@
     },
     "MasterAutoScalingGroup" : {
       "Type" : "AWS::AutoScaling::AutoScalingGroup",
-      "DependsOn" : ["MasterLaunchConfig", "MountTarget", "MasterQueue", "WorkerQueue"],
+      "DependsOn" : ["MasterLaunchConfig", "MountTarget", "MasterQueue", "WorkerQueue", "ClusterGroup"],
       "CreationPolicy" : {
         "ResourceSignal" : {
           "Timeout": {"Fn::Join" : ["", ["PT", { "Fn::FindInMap" : [ "Other", "TimeoutValues", "MasterLaunchTimeout" ]}, "S" ] ] },
@@ -600,8 +608,9 @@
         "DesiredCapacity" : "1",
         "MinSize" : "1",
         "MaxSize" : "1",
-        "LaunchConfigurationName" : { "Ref" : "MasterLaunchConfig"},
+        "LaunchConfigurationName" : { "Ref" : "MasterLaunchConfig" },
         "VPCZoneIdentifier" : [{ "Ref" : "PublicSubnet"}],
+        "PlacementGroup" : { "Ref" : "ClusterGroup" },
         "NotificationConfiguration" : {
           "TopicARN" : {
             "Ref" : "ResourceMetadataSNSTopic"
@@ -629,7 +638,7 @@
     },
     "WorkerAutoScalingGroup" : {
       "Type" : "AWS::AutoScaling::AutoScalingGroup",
-      "DependsOn" : ["WorkerLaunchConfig", "MountTarget", "MasterQueue", "WorkerQueue", "MasterAutoScalingGroup"],
+      "DependsOn" : ["WorkerLaunchConfig", "MountTarget", "MasterQueue", "WorkerQueue", "MasterAutoScalingGroup", "ClusterGroup"],
       "Properties" : {
         "MinSize" : "0",
         "MaxSize" : { "Ref" : "WorkerCount" },
@@ -638,6 +647,7 @@
           "Ref" : "WorkerLaunchConfig"
         },
         "VPCZoneIdentifier" : [ { "Ref" : "PrivateSubnet" } ],
+        "PlacementGroup" : { "Ref" : "ClusterGroup" },
         "NotificationConfiguration" : {
           "TopicARN" : {
             "Ref" : "ResourceMetadataSNSTopic"

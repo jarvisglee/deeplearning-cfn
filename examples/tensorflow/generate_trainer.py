@@ -35,7 +35,7 @@ def get_script(training_script, workers_list, ps_list, index, gpu_per_node, log_
     script = 'source /etc/profile'
     script += "\n\n"
 
-    script += 'source /home/ubuntu/anaconda3/bin/activate/tensorflow_p36'
+    script += 'source /home/ubuntu/anaconda3/bin/activate tensorflow_p36'
     script += "\n\n"
 
     script += "CUDA_VISIBLE_DEVICES='' python " + training_script + " " \
